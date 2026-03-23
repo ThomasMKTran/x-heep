@@ -81,6 +81,10 @@
  */
 #define W25Q128JW_CONTROLLER_ID          W25Q128JW_CONTROLLER_INTR_EVENT
 
+/**
+ * ID of the serial link wrapper interrupt request lines
+ */
+#define SERIAL_LINK_FIFO_ID   SERIAL_LINK_FIFO_INTR_EVENT
 
 /**
  * ID of the external interrupt request lines

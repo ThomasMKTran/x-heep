@@ -30,3 +30,7 @@ void sl_wrapper_direct_write_multiple(uint32_t dest, const uint32_t *data, uint3
         sl_wrapper_direct_write(dest + i * 4, data[i]);
     }
 }
+
+__attribute__((weak, optimize("O0"))) void handler_irq_serial_link_fifo(uint32_t id) {
+    // Default empty handler - override in application
+}

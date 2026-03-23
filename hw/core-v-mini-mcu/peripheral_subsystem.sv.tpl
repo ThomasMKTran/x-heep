@@ -638,6 +638,9 @@ module peripheral_subsystem
 % endif
 
 % if user_peripheral_domain.contains_peripheral('serial_link_reg'):
+  logic serial_link_fifo_intr_event; 
+  assign intr_vector[${interrupts["serial_link_fifo_intr_event"]}] = serial_link_fifo_intr_event;
+
   serial_link_xheep_wrapper #(
     .MaxClkDiv(32),
     .AddrWidth(32),
@@ -662,7 +665,8 @@ module peripheral_subsystem
     .ddr_rcv_clk_i,         
     .ddr_i,                   
     .ddr_rcv_clk_o,          
-    .ddr_o                   
+    .ddr_o,
+    .intr_event_o(serial_link_fifo_intr_event)                   
   );
 %endif
 

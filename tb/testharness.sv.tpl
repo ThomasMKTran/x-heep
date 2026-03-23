@@ -805,7 +805,8 @@ module testharness #(
           .ddr_i        (ddr_o_xheep),
           .ddr_rcv_clk_i(ddr_clk_o_xheep),
           .ddr_rcv_clk_o(ddr_clk_i_xheep),
-          .ddr_o        (ddr_i_xheep)
+          .ddr_o        (ddr_i_xheep), 
+          .intr_event_o       ()
       );
     %endif
 

@@ -115,4 +115,10 @@ void sl_wrapper_direct_write(uint32_t dest, uint32_t data);
  */
 void sl_wrapper_direct_write_multiple(uint32_t dest, const uint32_t *data, uint32_t count);
 
+/**
+ * @brief Default weak IRQ handler for Serial Link FIFO interrupt.
+ * Override this function in your application to handle the interrupt.
+ */
+void handler_irq_serial_link_fifo(uint32_t id);
+
 #endif // SERIAL_LINK_XHEEP_WRAPPER_DRIVER_H
