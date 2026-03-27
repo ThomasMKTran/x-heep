@@ -51,7 +51,7 @@ static uint32_t dma_buffer[NUM_WORDS] __attribute__((aligned(4))) = {0};
 volatile uint8_t sl_fifo_intr_flag = 0;
 volatile uint8_t dma_done_flag = 0;
 
-// Serial Link FIFO interrupt handler - launches DMA directly
+// Serial Link FIFO interrupt handler 
 void handler_irq_serial_link_fifo(uint32_t id) {
     PRINTF("handler called!\n");
     // Disable interrupt to prevent re-triggering while DMA runs
