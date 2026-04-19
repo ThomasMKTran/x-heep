@@ -8,43 +8,43 @@
 `include "common_cells/assertions.svh"
 
 module serial_link_xheep_wrapper_reg_top #(
-  parameter type reg_req_t = logic,
-  parameter type reg_rsp_t = logic,
-  parameter int AW = 3
+    parameter type reg_req_t = logic,
+    parameter type reg_rsp_t = logic,
+    parameter int AW = 3
 ) (
-  input logic clk_i,
-  input logic rst_ni,
-  input  reg_req_t reg_req_i,
-  output reg_rsp_t reg_rsp_o,
-  // To HW
-  output serial_link_xheep_wrapper_reg_pkg::serial_link_xheep_wrapper_reg2hw_t reg2hw, // Write
+    input logic clk_i,
+    input logic rst_ni,
+    input reg_req_t reg_req_i,
+    output reg_rsp_t reg_rsp_o,
+    // To HW
+    output serial_link_xheep_wrapper_reg_pkg::serial_link_xheep_wrapper_reg2hw_t reg2hw,  // Write
 
 
-  // Config
-  input devmode_i // If 1, explicit error return for unmapped register access
+    // Config
+    input devmode_i  // If 1, explicit error return for unmapped register access
 );
 
-  import serial_link_xheep_wrapper_reg_pkg::* ;
+  import serial_link_xheep_wrapper_reg_pkg::*;
 
   localparam int DW = 32;
-  localparam int DBW = DW/8;                    // Byte Width
+  localparam int DBW = DW / 8;  // Byte Width
 
   // register signals
-  logic           reg_we;
-  logic           reg_re;
-  logic [BlockAw-1:0]  reg_addr;
-  logic [DW-1:0]  reg_wdata;
-  logic [DBW-1:0] reg_be;
-  logic [DW-1:0]  reg_rdata;
-  logic           reg_error;
+  logic               reg_we;
+  logic               reg_re;
+  logic [BlockAw-1:0] reg_addr;
+  logic [     DW-1:0] reg_wdata;
+  logic [    DBW-1:0] reg_be;
+  logic [     DW-1:0] reg_rdata;
+  logic               reg_error;
 
-  logic          addrmiss, wr_err;
+  logic addrmiss, wr_err;
 
   logic [DW-1:0] reg_rdata_next;
 
   // Below register interface can be changed
-  reg_req_t  reg_intf_req;
-  reg_rsp_t  reg_intf_rsp;
+  reg_req_t reg_intf_req;
+  reg_rsp_t reg_intf_rsp;
 
 
   assign reg_intf_req = reg_req_i;
@@ -60,7 +60,7 @@ module serial_link_xheep_wrapper_reg_top #(
   assign reg_intf_rsp.error = reg_error;
   assign reg_intf_rsp.ready = 1'b1;
 
-  assign reg_rdata = reg_rdata_next ;
+  assign reg_rdata = reg_rdata_next;
   assign reg_error = (devmode_i & addrmiss) | wr_err;
 
 
@@ -78,54 +78,54 @@ module serial_link_xheep_wrapper_reg_top #(
   // R[rx_mode]: V(False)
 
   prim_subreg #(
-    .DW      (1),
-    .SWACCESS("RW"),
-    .RESVAL  (1'h0)
+      .DW      (1),
+      .SWACCESS("RW"),
+      .RESVAL  (1'h0)
   ) u_rx_mode (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
+      .clk_i (clk_i),
+      .rst_ni(rst_ni),
 
-    // from register interface
-    .we     (rx_mode_we),
-    .wd     (rx_mode_wd),
+      // from register interface
+      .we(rx_mode_we),
+      .wd(rx_mode_wd),
 
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+      // from internal hardware
+      .de(1'b0),
+      .d ('0),
 
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.rx_mode.q ),
+      // to internal hardware
+      .qe(),
+      .q (reg2hw.rx_mode.q),
 
-    // to register interface (read)
-    .qs     (rx_mode_qs)
+      // to register interface (read)
+      .qs(rx_mode_qs)
   );
 
 
   // R[direct_write_word_count]: V(False)
 
   prim_subreg #(
-    .DW      (16),
-    .SWACCESS("RW"),
-    .RESVAL  (16'h0)
+      .DW      (16),
+      .SWACCESS("RW"),
+      .RESVAL  (16'h0)
   ) u_direct_write_word_count (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
+      .clk_i (clk_i),
+      .rst_ni(rst_ni),
 
-    // from register interface
-    .we     (direct_write_word_count_we),
-    .wd     (direct_write_word_count_wd),
+      // from register interface
+      .we(direct_write_word_count_we),
+      .wd(direct_write_word_count_wd),
 
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+      // from internal hardware
+      .de(1'b0),
+      .d ('0),
 
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.direct_write_word_count.q ),
+      // to internal hardware
+      .qe(),
+      .q (reg2hw.direct_write_word_count.q),
 
-    // to register interface (read)
-    .qs     (direct_write_word_count_qs)
+      // to register interface (read)
+      .qs(direct_write_word_count_qs)
   );
 
 
@@ -138,7 +138,7 @@ module serial_link_xheep_wrapper_reg_top #(
     addr_hit[1] = (reg_addr == SERIAL_LINK_XHEEP_WRAPPER_DIRECT_WRITE_WORD_COUNT_OFFSET);
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0;
 
   // Check sub-word write is permitted
   always_comb begin
@@ -185,23 +185,22 @@ module serial_link_xheep_wrapper_reg_top #(
 
 endmodule
 
-module serial_link_xheep_wrapper_reg_top_intf
-#(
-  parameter int AW = 3,
-  localparam int DW = 32
+module serial_link_xheep_wrapper_reg_top_intf #(
+    parameter  int AW = 3,
+    localparam int DW = 32
 ) (
-  input logic clk_i,
-  input logic rst_ni,
-  REG_BUS.in  regbus_slave,
-  // To HW
-  output serial_link_xheep_wrapper_reg_pkg::serial_link_xheep_wrapper_reg2hw_t reg2hw, // Write
-  // Config
-  input devmode_i // If 1, explicit error return for unmapped register access
+    input logic clk_i,
+    input logic rst_ni,
+    REG_BUS.in regbus_slave,
+    // To HW
+    output serial_link_xheep_wrapper_reg_pkg::serial_link_xheep_wrapper_reg2hw_t reg2hw,  // Write
+    // Config
+    input devmode_i  // If 1, explicit error return for unmapped register access
 );
- localparam int unsigned STRB_WIDTH = DW/8;
+  localparam int unsigned STRB_WIDTH = DW / 8;
 
-`include "register_interface/typedef.svh"
-`include "register_interface/assign.svh"
+  `include "register_interface/typedef.svh"
+  `include "register_interface/assign.svh"
 
   // Define structs for reg_bus
   typedef logic [AW-1:0] addr_t;
@@ -211,26 +210,26 @@ module serial_link_xheep_wrapper_reg_top_intf
 
   reg_bus_req_t s_reg_req;
   reg_bus_rsp_t s_reg_rsp;
-  
+
   // Assign SV interface to structs
   `REG_BUS_ASSIGN_TO_REQ(s_reg_req, regbus_slave)
   `REG_BUS_ASSIGN_FROM_RSP(regbus_slave, s_reg_rsp)
 
-  
+
 
   serial_link_xheep_wrapper_reg_top #(
-    .reg_req_t(reg_bus_req_t),
-    .reg_rsp_t(reg_bus_rsp_t),
-    .AW(AW)
+      .reg_req_t(reg_bus_req_t),
+      .reg_rsp_t(reg_bus_rsp_t),
+      .AW(AW)
   ) i_regs (
-    .clk_i,
-    .rst_ni,
-    .reg_req_i(s_reg_req),
-    .reg_rsp_o(s_reg_rsp),
-    .reg2hw, // Write
-    .devmode_i
+      .clk_i,
+      .rst_ni,
+      .reg_req_i(s_reg_req),
+      .reg_rsp_o(s_reg_rsp),
+      .reg2hw,  // Write
+      .devmode_i
   );
-  
+
 endmodule
 
 

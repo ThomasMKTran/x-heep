@@ -19,6 +19,10 @@
 #include "serial_link_xheep_wrapper_driver.h"
 #include "pad_control.h"
 #include "pad_control_regs.h"
+#include "rv_plic.h"
+
+// 1 = receiver board, 0 = sender board 
+#define FPGA_RECEIVE 1
 
 #define PRINTF_IN_FPGA  1
 #define PRINTF_IN_SIM   1
@@ -31,11 +35,11 @@
     #define PRINTF(...)
 #endif
 
+#define DIRECT_WRITE_TARGET_ADDR    0x0000F800
+#define SYNC_ADDR                   0x00007F00
+#define READY                       0x00000001
+
 #define NUM_WORDS 4
-
-// 1 = receiver board, 0 = sender board 
-#define FPGA_RECEIVE 1
-
 const int32_t test_data[NUM_WORDS] = {0x11111111, 0x22222222, 0x33333333, 0x44444444};
 
 // DMA destination buffer
@@ -46,7 +50,13 @@ static uint32_t dma_buffer[NUM_WORDS] __attribute__((aligned(4))) = {0};
     #define EXT_SLAVE_LENGTH            0x400
     #define SL_EXTERNAL_WRITE           (volatile int32_t *)(EXT_SLAVE_START_ADDRESS + EXT_SLAVE_LENGTH)
     #define SL_EXTERNAL_CTRL_REG_ADDR   (int32_t *)(EXT_PERIPHERAL_START_ADDRESS + 0x06000 + SERIAL_LINK_SINGLE_CHANNEL_CTRL_REG_OFFSET)
+    #define SL_EXTERNAL_DIRECT_WRITE    (int32_t *)(EXT_SLAVE_START_ADDRESS + EXT_SLAVE_LENGTH + DIRECT_WRITE_TARGET_ADDR)
 #endif
+
+void handler_irq_sl_direct_write(uint32_t id) {
+    sl_wrapper_direct_write_intr_flag = 1;
+    plic_irq_set_enabled(SERIAL_LINK_DIRECT_WRITE_ID, kPlicToggleDisabled);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -115,6 +125,7 @@ int main(int argc, char *argv[]) {
     // =========================================================================
 
     PRINTF("=== Serial Link FIFO Interrupt Test (RECEIVE) ===\n");
+    int32_t rcv_data;
 
     sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_FIFO);
 
@@ -142,6 +153,32 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // PRINTF("--- Test 2: Direct write mode ---\n");
+    // sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_DIRECT_WRITE);
+
+    // for (int i = 0; i < NUM_WORDS; i++)
+    //     ((volatile uint32_t *)DIRECT_WRITE_TARGET_ADDR)[i] = 0;
+
+    // sl_wrapper_direct_write_arm(NUM_WORDS);
+
+    // sl_wrapper_direct_write(SYNC_ADDR, READY);
+
+    // while (!sl_wrapper_direct_write_intr_flag) {
+    //     wait_for_interrupt();
+    // }
+    // sl_wrapper_direct_write_intr_flag = 0;
+
+    // for (int i = 0; i < NUM_WORDS; i++) {
+    //     rcv_data = ((volatile int32_t *)DIRECT_WRITE_TARGET_ADDR)[i];
+    //     if (rcv_data != test_data[i]) {
+    //         PRINTF("DIRECT WRITE ERROR [%d]: got 0x%08x expected 0x%08x\n",
+    //             i, rcv_data, test_data[i]);
+    //         errors++;
+    //     } else {
+    //         PRINTF("DIRECT WRITE OK [%d]: 0x%08x\n", i, rcv_data);
+    //     }
+    // }
+
     if (errors == 0) {
         PRINTF("DONE - All tests passed\n");
         return EXIT_SUCCESS;
@@ -154,12 +191,23 @@ int main(int argc, char *argv[]) {
     // =========================================================================
     // FPGA SENDER
     // =========================================================================
+    sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_DIRECT_WRITE);
+    volatile uint32_t *ready = (volatile uint32_t *)SYNC_ADDR;
+    
     PRINTF("=== Serial Link FIFO Interrupt Test (SEND) ===\n");
 
     for (int i = 0; i < NUM_WORDS; i++) {
         *SL_WRITE = test_data[i];
         PRINTF("Sent [%d]: 0x%08x\n", i, test_data[i]);
     }
+
+    // while(*ready != READY);
+    // *ready = 0; 
+   
+    // for (int i = 0; i < NUM_WORDS; i++) {
+    //     sl_wrapper_direct_write(DIRECT_WRITE_TARGET_ADDR + i * 4, (uint32_t)test_data[i]);
+    //     PRINTF("Direct write sent [%d]: 0x%08x\n", i, test_data[i]);
+    // }
 
     PRINTF("DONE\n");
     return EXIT_SUCCESS;
