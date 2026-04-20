@@ -111,6 +111,35 @@ int main(int argc, char *argv[]) {
         }
     }
 
+     PRINTF("--- Test 2: Direct write interrupt ---\n");
+
+    for (int i = 0; i < NUM_WORDS; i++)
+        ((volatile uint32_t *)DIRECT_WRITE_TARGET_ADDR)[i] = 0;
+
+    sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_DIRECT_WRITE);
+
+    sl_wrapper_direct_write_arm(NUM_WORDS);
+
+    for (int i = 0; i < NUM_WORDS; i++) {
+        *((volatile int32_t *)SL_EXTERNAL_DIRECT_WRITE + i) = test_data[i];
+    }
+
+    while (!sl_wrapper_direct_write_intr_flag) {
+        wait_for_interrupt();
+    }
+    sl_wrapper_direct_write_intr_flag = 0;
+
+    for (int i = 0; i < NUM_WORDS; i++) {
+        int32_t rcv = ((volatile int32_t *)DIRECT_WRITE_TARGET_ADDR)[i];
+        if (rcv != test_data[i]) {
+            PRINTF("DIRECT WRITE ERROR [%d]: got 0x%08x expected 0x%08x\n",
+                   i, rcv, test_data[i]);
+            errors++;
+        } else {
+            PRINTF("DIRECT WRITE OK [%d]: 0x%08x\n", i, rcv);
+        }
+    }
+
     if (errors == 0) {
         PRINTF("DONE - All tests passed\n");
         return EXIT_SUCCESS;
@@ -127,13 +156,16 @@ int main(int argc, char *argv[]) {
     PRINTF("=== Serial Link FIFO Interrupt Test (RECEIVE) ===\n");
     int32_t rcv_data;
 
+    PRINTF("Before rx mode\n");
     sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_FIFO);
+    PRINTF("after rx mode\n");
 
     dma_config_flags_t res = sl_wrapper_dma_read_launch(dma_buffer, NUM_WORDS); 
     if (res != DMA_CONFIG_OK) {
         PRINTF("DMA launch failed: %d\n", res);
         return EXIT_FAILURE;
     }
+    PRINTF("before dma intr rx mode\n");
 
     while (!sl_wrapper_dma_intr_flag) {
         wait_for_interrupt();
@@ -153,31 +185,31 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // PRINTF("--- Test 2: Direct write mode ---\n");
-    // sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_DIRECT_WRITE);
+    PRINTF("--- Test 2: Direct write mode ---\n");
+    sl_wrapper_set_rx_mode(SL_WRAPPER_RX_MODE_DIRECT_WRITE);
 
-    // for (int i = 0; i < NUM_WORDS; i++)
-    //     ((volatile uint32_t *)DIRECT_WRITE_TARGET_ADDR)[i] = 0;
+    for (int i = 0; i < NUM_WORDS; i++)
+        ((volatile uint32_t *)DIRECT_WRITE_TARGET_ADDR)[i] = 0;
 
-    // sl_wrapper_direct_write_arm(NUM_WORDS);
+    sl_wrapper_direct_write_arm(NUM_WORDS);
 
-    // sl_wrapper_direct_write(SYNC_ADDR, READY);
+    sl_wrapper_direct_write(SYNC_ADDR, READY);
 
-    // while (!sl_wrapper_direct_write_intr_flag) {
-    //     wait_for_interrupt();
-    // }
-    // sl_wrapper_direct_write_intr_flag = 0;
+    while (!sl_wrapper_direct_write_intr_flag) {
+        wait_for_interrupt();
+    }
+    sl_wrapper_direct_write_intr_flag = 0;
 
-    // for (int i = 0; i < NUM_WORDS; i++) {
-    //     rcv_data = ((volatile int32_t *)DIRECT_WRITE_TARGET_ADDR)[i];
-    //     if (rcv_data != test_data[i]) {
-    //         PRINTF("DIRECT WRITE ERROR [%d]: got 0x%08x expected 0x%08x\n",
-    //             i, rcv_data, test_data[i]);
-    //         errors++;
-    //     } else {
-    //         PRINTF("DIRECT WRITE OK [%d]: 0x%08x\n", i, rcv_data);
-    //     }
-    // }
+    for (int i = 0; i < NUM_WORDS; i++) {
+        rcv_data = ((volatile int32_t *)DIRECT_WRITE_TARGET_ADDR)[i];
+        if (rcv_data != test_data[i]) {
+            PRINTF("DIRECT WRITE ERROR [%d]: got 0x%08x expected 0x%08x\n",
+                i, rcv_data, test_data[i]);
+            errors++;
+        } else {
+            PRINTF("DIRECT WRITE OK [%d]: 0x%08x\n", i, rcv_data);
+        }
+    }
 
     if (errors == 0) {
         PRINTF("DONE - All tests passed\n");
@@ -201,13 +233,13 @@ int main(int argc, char *argv[]) {
         PRINTF("Sent [%d]: 0x%08x\n", i, test_data[i]);
     }
 
-    // while(*ready != READY);
-    // *ready = 0; 
+    while(*ready != READY);
+    *ready = 0; 
    
-    // for (int i = 0; i < NUM_WORDS; i++) {
-    //     sl_wrapper_direct_write(DIRECT_WRITE_TARGET_ADDR + i * 4, (uint32_t)test_data[i]);
-    //     PRINTF("Direct write sent [%d]: 0x%08x\n", i, test_data[i]);
-    // }
+    for (int i = 0; i < NUM_WORDS; i++) {
+        sl_wrapper_direct_write(DIRECT_WRITE_TARGET_ADDR + i * 4, (uint32_t)test_data[i]);
+        PRINTF("Direct write sent [%d]: 0x%08x\n", i, test_data[i]);
+    }
 
     PRINTF("DONE\n");
     return EXIT_SUCCESS;
