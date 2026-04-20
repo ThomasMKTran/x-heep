@@ -100,8 +100,6 @@ void sl_wrapper_direct_write_arm(uint32_t count) {
 
     sl_wrapper_direct_write_intr_flag = 0;
 
-
-
     // Register handler, set priority, enable in PLIC — edge trigger (one-cycle pulse)
     plic_Init();
     plic_assign_external_irq_handler(SERIAL_LINK_DIRECT_WRITE_ID,
